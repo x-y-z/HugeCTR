@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iterator>
+#include <cuda_profiler_api.h>
 
 namespace fs = std::experimental::filesystem;
 
@@ -927,7 +928,11 @@ void Model::fit(int num_epochs, int max_iter, int display, int eval_interval, in
           lr = lr_sch_->get_next();
           this->set_learning_rate(lr);
         }
+        MESSAGE_("cudaProfilerStart");
+        cudaProfilerStart();
         data_reader_train_status_ = this->train(is_first_train_batch_after_eval);
+        cudaProfilerStop();
+        MESSAGE_("cudaProfilerStop");
         is_first_train_batch_after_eval = false;
         if (display > 0 && iter % display == 0 && iter != 0) {
           timer_train.stop();
@@ -1097,7 +1102,13 @@ void Model::fit(int num_epochs, int max_iter, int display, int eval_interval, in
         lr = lr_sch_->get_next();
         this->set_learning_rate(lr);
       }
+      MESSAGE_("cudaProfilerStart");
+      cudaProfilerStart();
+
       this->train(is_first_train_batch_after_eval);
+
+      cudaProfilerStop();
+      MESSAGE_("cudaProfilerStop");
       is_first_train_batch_after_eval = false;
       if (display > 0 && iter % display == 0 && iter != 0) {
         timer_train.stop();
